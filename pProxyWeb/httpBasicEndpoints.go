@@ -1,4 +1,4 @@
-package main
+package pProxyWeb
 
 import (
 	"encoding/base32"
@@ -8,14 +8,9 @@ import (
 	"strings"
 )
 
-func getVersion(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, version)
-	println(r.RemoteAddr + ": version request")
-}
-
 // Supports got http and https
 // Simple http get
-func httpGet(w http.ResponseWriter, r *http.Request) {
+func HttpGet(w http.ResponseWriter, r *http.Request) {
 
 	//Print to log
 	println(r.RemoteAddr + ": get request")

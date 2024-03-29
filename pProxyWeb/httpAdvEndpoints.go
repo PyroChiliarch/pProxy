@@ -1,4 +1,4 @@
-package main
+package pProxyWeb
 
 import (
 	"encoding/base32"
@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func httpClientNew(w http.ResponseWriter, r *http.Request) {
+func HttpClientNew(w http.ResponseWriter, r *http.Request) {
 	//Create new client
 	jar := NewJar()
 	c := http.Client{Jar: jar} // Give the client a cookie jar
@@ -33,7 +33,7 @@ func httpClientNew(w http.ResponseWriter, r *http.Request) {
 //
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func httpClientGetJar(w http.ResponseWriter, r *http.Request) {
+func HttpClientGetJar(w http.ResponseWriter, r *http.Request) {
 
 	values := strings.Split(r.URL.Path, "/")
 
@@ -77,7 +77,7 @@ func httpClientGetJar(w http.ResponseWriter, r *http.Request) {
 //
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func httpClientDoRequestStart(w http.ResponseWriter, r *http.Request) {
+func HttpClientDoRequestStart(w http.ResponseWriter, r *http.Request) {
 
 	//Get new ID
 	id := uuid.New()
@@ -91,7 +91,7 @@ func httpClientDoRequestStart(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func httpClientDoRequestMsg(w http.ResponseWriter, r *http.Request) {
+func HttpClientDoRequestMsg(w http.ResponseWriter, r *http.Request) {
 
 	///////////Split URL into components
 	//Eg /http/client/dorequest/msg/7cd344ab-1fb2-4a50-8894-a2a97474f68c/2/3tajjwgustmrjfgiycknzteu3dkjjxgmstmmjfgzccknrvej6x2===
@@ -118,7 +118,7 @@ func httpClientDoRequestMsg(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "OK")
 }
 
-func httpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
+func HttpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
 
 	//Client has sent all their data and wants to do the request and get their data
 	// Eg: /http/client/dorequest/end/7cd344ab-1fb2-4a50-8894-a2a97474f68c
