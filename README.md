@@ -14,3 +14,5 @@ go run .
 By default, the proxy listens on port 8080.
 This is currently hardcoded, you can change it in main.go line 36
 
+The pProxy command line tool and library are available here:
+https://www.lexaloffle.com/bbs/?tid=141188
