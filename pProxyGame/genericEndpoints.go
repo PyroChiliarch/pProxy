@@ -2,8 +2,10 @@ package pProxyGame
 
 import (
 	"encoding/base32"
+	"errors"
 	"fmt"
 	"net/http"
+	"pProxy/util"
 	"strings"
 
 	"github.com/google/uuid"
@@ -40,6 +42,7 @@ func RegUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//Change to string from bytes
 	newUsername := string(newUsernameBytes)
 
 	//Check if username exists
@@ -53,7 +56,7 @@ func RegUser(w http.ResponseWriter, r *http.Request) {
 
 	//Return error to client if username already exists
 	if userExists {
-		fmt.Fprintf(w, "Registering failed!: "+newUsername+" already registered")
+		util.ReturnMessage(w, r, "", errors.New("Registering failed!: "+newUsername+" already registered"))
 		return
 	}
 
@@ -61,7 +64,10 @@ func RegUser(w http.ResponseWriter, r *http.Request) {
 	id := uuid.New()
 	usersCache[id] = newUsername
 
+	//Json encoded message
+	util.ReturnMessage(w, r, id.String(), nil)
+
 	//Let Picotron know the id of their new user
-	fmt.Fprintf(w, id.String())
+	//fmt.Fprintf(w, msg)
 	println(r.RemoteAddr + ": new user: " + newUsername)
 }
