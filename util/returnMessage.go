@@ -24,7 +24,7 @@ func ReturnMessage(_writer http.ResponseWriter, _request *http.Request, _content
 	if _err != nil {
 
 		msg.Err = true
-		msg.Content = _err.Error()
+		msg.Content = "pProxy Server Error: " + _err.Error() //Make it easier to debug programs, know where the issue is
 		println(_request.RemoteAddr + ": ERROR: " + _err.Error())
 
 	} else {
@@ -33,6 +33,9 @@ func ReturnMessage(_writer http.ResponseWriter, _request *http.Request, _content
 		msg.Content = _content
 		println(_request.RemoteAddr + ": RESPONED TO REQUEST: " + _request.RequestURI)
 	}
+
+	//println(msg.Content)
+	//println(msg.Err)
 
 	//Transmit struct as a json string to be reconstructed at the other end
 	jsonMsgBytes, err := json.Marshal(msg)
@@ -44,5 +47,6 @@ func ReturnMessage(_writer http.ResponseWriter, _request *http.Request, _content
 	}
 
 	//Return crafted message to client
+	//println(string(jsonMsgBytes))
 	fmt.Fprintf(_writer, string(jsonMsgBytes))
 }

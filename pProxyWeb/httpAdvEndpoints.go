@@ -3,7 +3,6 @@ package pProxyWeb
 import (
 	"encoding/base32"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -25,8 +24,8 @@ func HttpClientNew(w http.ResponseWriter, r *http.Request) {
 	httpClients[id] = c
 
 	//Let Picotron know the id of their new client
-	fmt.Fprintf(w, id.String())
-	println(r.RemoteAddr + ": new client: " + id.String())
+	util.ReturnMessage(w, r, id.String(), nil)
+	//util.ReturnMessage(w, r, id.String(), errors.New("Unknown error"))
 }
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,21 +41,21 @@ func HttpClientGetJar(w http.ResponseWriter, r *http.Request) {
 	// Client ID is the second last value
 	clientID, err := uuid.Parse(values[len(values)-2])
 	if err != nil {
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 
 	// Url is the last value, decode it into its original string (in bytes)
 	urlString, err := base32.StdEncoding.DecodeString(strings.ToUpper(values[len(values)-1]))
 	if err != nil {
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 
 	// Change url string into a url object
 	myUrl, err := url.Parse(string(urlString))
 	if err != nil {
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 
@@ -66,11 +65,14 @@ func HttpClientGetJar(w http.ResponseWriter, r *http.Request) {
 	//Get cookies from client
 	cookies := client.Jar.Cookies(myUrl)
 	jsonBytes, err := json.Marshal(cookies)
+	if err != nil {
+		util.ReturnMessage(w, r, "", err)
+		return
+	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Send cookie jar back
-	fmt.Fprintf(w, string(jsonBytes))
-	println(r.RemoteAddr + ": Sent cookies from client: " + clientID.String())
+	util.ReturnMessage(w, r, string(jsonBytes), nil)
 }
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,8 +89,7 @@ func HttpClientDoRequestStart(w http.ResponseWriter, r *http.Request) {
 	id := util.StartMsg(httpMultiMsgsCache)
 
 	//Send new request ID to client for subsequent requests
-	fmt.Fprintf(w, id.String())
-	println(r.RemoteAddr + ": Client Request start : " + id.String())
+	util.ReturnMessage(w, r, id.String(), nil)
 
 }
 
@@ -99,11 +100,11 @@ func HttpClientDoRequestMsg(w http.ResponseWriter, r *http.Request) {
 	//Add the message part to the full request
 	err := util.PartMsg(httpMultiMsgsCache, r.URL.Path)
 	if err != nil {
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 
-	fmt.Fprintf(w, "OK")
+	util.ReturnMessage(w, r, "OK", nil)
 }
 
 func HttpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
@@ -117,8 +118,7 @@ func HttpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
 	//Data is still encoded in base32, and in json
 	msg, err := base32.StdEncoding.DecodeString(encodedData)
 	if err != nil {
-		println(err.Error())
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 
@@ -130,16 +130,14 @@ func HttpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
 
 	// Unmarshal json, return on error
 	if err := json.Unmarshal(byteData, &data); err != nil {
-		println(err.Error())
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 
 	//Get request from json
 	clientID, err := uuid.Parse(data["client"].(string))
 	if err != nil {
-		println(err.Error())
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 
@@ -167,16 +165,14 @@ func HttpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
 	//Do the newly reconstructed request
 	httpResponse, err := client.Do(newRequest)
 	if err != nil {
-		println(err.Error())
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 
 	//Get body of response
 	resBodyStr, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
-		println(err.Error())
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 
@@ -219,11 +215,11 @@ func HttpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
 	//Format response as json
 	jsonString, err := json.Marshal(picoResponse)
 	if err != nil {
-		println(err.Error())
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 	println(r.RemoteAddr + ": Client Request end")
-	fmt.Fprintf(w, string(jsonString)) // string(resBodyStr))
 
+	//Send response to client
+	util.ReturnMessage(w, r, string(jsonString), nil)
 }

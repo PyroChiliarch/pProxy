@@ -2,9 +2,10 @@ package pProxyWeb
 
 import (
 	"encoding/base32"
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
+	"pProxy/util"
 	"strings"
 )
 
@@ -12,39 +13,36 @@ import (
 // Simple http get
 func HttpGet(w http.ResponseWriter, r *http.Request) {
 
-	//Print to log
-	println(r.RemoteAddr + ": get request")
-
 	//Read url parameter from url
 	encodedUrl := r.URL.Query().Get("url")
 	urlBytes, err := base32.StdEncoding.DecodeString(strings.ToUpper(encodedUrl)) //Pico can only do lower case requests ,need to chagne to upper case
 	if err != nil {
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err) // Catch error, send it to client
 		return
 	}
 	url := string(urlBytes[:])
 
 	// Return nothing if no url
 	if url == "" {
-		fmt.Fprintf(w, "ERROR-NOURL")
+		util.ReturnMessage(w, r, "", errors.New("URL is empty")) // Catch error, send it to client
 		return
 	}
 
 	//Make a proxied get request
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err) // Catch error, send it to client
 		return
 	}
 
+	//Get body of the response
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err) // Catch error, send it to client
 		return
 	}
 
-	encodedResponse := base32.StdEncoding.EncodeToString(body)
+	//Send body of response to picotron client
+	util.ReturnMessage(w, r, string(body), nil)
 
-	//Pass the response back
-	fmt.Fprintf(w, encodedResponse)
 }
