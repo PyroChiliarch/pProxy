@@ -1,6 +1,7 @@
 package pProxyWeb
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"sync"
@@ -16,7 +17,30 @@ import (
 
 // List of clients used by agents
 var httpClients = make(map[uuid.UUID]http.Client)
-var httpMultiRequests = make(map[uuid.UUID]map[int]string)
+var httpMultiMsgsCache = make(map[uuid.UUID]map[int]string)
+
+// //////////////////////////////////////////////////////////////////////
+// Return Message packaging
+// Messages to Picotron get packaged in json so we can pass error as a bit of metadata
+type returnMessage struct {
+	content string
+	err     string
+}
+
+func NewReturnMessage(_err string, _content string) (jsonMsg string, err error) {
+	msg := new(returnMessage)
+	msg.err = _err
+	msg.content = _content
+
+	jsonMsgBytes, err := json.Marshal(msg)
+	if err != nil {
+		return
+	}
+
+	jsonMsg = string(jsonMsgBytes)
+	return
+
+}
 
 ////////////////////////////////////////////////////////////////////////
 // Cookie Jar Stuff

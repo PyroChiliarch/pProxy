@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"pProxy/util"
+
 	"github.com/google/uuid"
 )
 
@@ -47,7 +49,7 @@ func HttpClientGetJar(w http.ResponseWriter, r *http.Request) {
 	// Url is the last value, decode it into its original string (in bytes)
 	urlString, err := base32.StdEncoding.DecodeString(strings.ToUpper(values[len(values)-1]))
 	if err != nil {
-		fmt.Fprintf(w, "ER"+err.Error())
+		fmt.Fprintf(w, err.Error())
 		return
 	}
 
@@ -79,11 +81,10 @@ func HttpClientGetJar(w http.ResponseWriter, r *http.Request) {
 
 func HttpClientDoRequestStart(w http.ResponseWriter, r *http.Request) {
 
-	//Get new ID
-	id := uuid.New()
+	//Eg /http/client/dorequest/start
 
-	//Store ID
-	httpMultiRequests[id] = make(map[int]string) //Make a new map to store incoming requests
+	//Start the request, return request ID to client
+	id := util.StartMsg(httpMultiMsgsCache)
 
 	//Send new request ID to client for subsequent requests
 	fmt.Fprintf(w, id.String())
@@ -93,27 +94,14 @@ func HttpClientDoRequestStart(w http.ResponseWriter, r *http.Request) {
 
 func HttpClientDoRequestMsg(w http.ResponseWriter, r *http.Request) {
 
-	///////////Split URL into components
 	//Eg /http/client/dorequest/msg/7cd344ab-1fb2-4a50-8894-a2a97474f68c/2/3tajjwgustmrjfgiycknzteu3dkjjxgmstmmjfgzccknrvej6x2===
-	values := strings.Split(r.URL.Path, "/")
 
-	//Parse URL Values
-	requestID, err := uuid.Parse(values[len(values)-3])
+	//Add the message part to the full request
+	err := util.PartMsg(httpMultiMsgsCache, r.URL.Path)
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
 		return
 	}
-
-	msgID, err := strconv.Atoi(values[len(values)-2])
-	if err != nil {
-		fmt.Fprintf(w, err.Error())
-		return
-	}
-
-	data := values[len(values)-1]
-
-	//Store data
-	httpMultiRequests[requestID][msgID] = data
 
 	fmt.Fprintf(w, "OK")
 }
@@ -122,24 +110,12 @@ func HttpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
 
 	//Client has sent all their data and wants to do the request and get their data
 	// Eg: /http/client/dorequest/end/7cd344ab-1fb2-4a50-8894-a2a97474f68c
-	values := strings.Split(r.URL.Path, "/")
+	encodedData, err := util.EndMsg(httpMultiMsgsCache, r.URL.Path)
 
-	//Request ID is the last value, its the only one thats needed
-	requestID, err := uuid.Parse(values[len(values)-1])
-	if err != nil {
-		println(err.Error())
-		fmt.Fprintf(w, err.Error())
-		return
-	}
+	////////////////////////////////////////////// Before this gets put in util
 
-	//Rebuild data from each request
-	fullData := ""
-	for i := 0; i < len(httpMultiRequests[requestID]); i++ { //Maps do not have a guranteed order, need to loop manualy, iterators probably will cause messag to be in wrong order
-		fullData = fullData + httpMultiRequests[requestID][i]
-	}
-
-	//Data is still lowercase, encoded in base32, and in json
-	rawData, err := base32.StdEncoding.DecodeString(strings.ToUpper(fullData))
+	//Data is still encoded in base32, and in json
+	msg, err := base32.StdEncoding.DecodeString(encodedData)
 	if err != nil {
 		println(err.Error())
 		fmt.Fprintf(w, err.Error())
@@ -149,7 +125,7 @@ func HttpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
 	//////////// Unmarshal json
 	// Make vars needed
 
-	byteData := []byte(rawData)     // Data as byte[]
+	byteData := []byte(msg)         // Data as byte[]
 	var data map[string]interface{} // Empty map
 
 	// Unmarshal json, return on error
@@ -247,7 +223,7 @@ func HttpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, err.Error())
 		return
 	}
-
+	println(r.RemoteAddr + ": Client Request end")
 	fmt.Fprintf(w, string(jsonString)) // string(resBodyStr))
-	println(r.RemoteAddr + ": Client Request end : " + requestID.String())
+
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"pProxy/pProxyGame"
 	"pProxy/pProxyWeb"
 	"strconv"
 )
@@ -26,14 +27,14 @@ func getVersion(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
-	///////////////////// Load Generic Endpoints /////////////////////
+	///////////////////// Register Generic Endpoints /////////////////////
 	//Catch all, return error
 	http.HandleFunc("/", defaultHandler)
 
 	//Utils
 	http.HandleFunc("/version", getVersion)
 
-	///////////////////// Load Web Endpoints /////////////////////
+	///////////////////// Register Web Endpoints /////////////////////
 	//Basic http
 	http.HandleFunc("/http/get", pProxyWeb.HttpGet)
 
@@ -46,7 +47,9 @@ func main() {
 	http.HandleFunc("/http/client/dorequest/msg/*", pProxyWeb.HttpClientDoRequestMsg)
 	http.HandleFunc("/http/client/dorequest/end/*", pProxyWeb.HttpClientDoRequestEnd)
 
-	///////////////////// Load Game Endpoints /////////////////////
+	///////////////////// Register Game Endpoints /////////////////////
+	http.HandleFunc("/game/reguser/*", pProxyGame.RegUser)
+	//http.HandleFunc("/game/lobby/getgames")
 
 	///////////////////// Start Server /////////////////////
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), nil))
