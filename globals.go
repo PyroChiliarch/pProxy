@@ -1,4 +1,3 @@
 package main
 
-var version = "0"
-var port = 8080
+var version = "1"
