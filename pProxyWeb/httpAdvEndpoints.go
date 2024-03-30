@@ -112,6 +112,10 @@ func HttpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
 	//Client has sent all their data and wants to do the request and get their data
 	// Eg: /http/client/dorequest/end/7cd344ab-1fb2-4a50-8894-a2a97474f68c
 	encodedData, err := util.EndMsg(httpMultiMsgsCache, r.URL.Path)
+	if err != nil {
+		util.ReturnMessage(w, r, "", err)
+		return
+	}
 
 	////////////////////////////////////////////// Before this gets put in util
 
@@ -155,6 +159,10 @@ func HttpClientDoRequestEnd(w http.ResponseWriter, r *http.Request) {
 
 	//Craft new Request object
 	newRequest, err := http.NewRequest(strings.ToUpper(method), url, body)
+	if err != nil {
+		util.ReturnMessage(w, r, "", err)
+		return
+	}
 
 	//Set headers, values are in format "name:data"
 	for _, v := range headers {
