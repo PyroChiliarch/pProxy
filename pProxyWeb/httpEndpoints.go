@@ -10,21 +10,19 @@ import (
 	"strings"
 
 	"pProxy/util"
-
-	"github.com/google/uuid"
 )
 
 func HttpClientNewHandler(w http.ResponseWriter, r *http.Request) {
 	//Create new client
 	jar := NewJar()
 	c := http.Client{Jar: jar} // Give the client a cookie jar
-	id := uuid.New()
+	id := util.GenToken()      //uuid.New()
 
 	//Store the client
 	httpClients[id] = c
 
 	//Let Picotron know the id of their new client
-	util.ReturnMessage(w, r, id.String(), nil)
+	util.ReturnMessage(w, r, id, nil)
 	//util.ReturnMessage(w, r, id.String(), errors.New("Unknown error"))
 }
 
@@ -39,11 +37,7 @@ func HttpClientGetJarHandler(w http.ResponseWriter, r *http.Request) {
 	values := strings.Split(r.URL.Path, "/")
 
 	// Client ID is the second last value
-	clientID, err := uuid.Parse(values[len(values)-2])
-	if err != nil {
-		util.ReturnMessage(w, r, "", err)
-		return
-	}
+	clientID := values[len(values)-2]
 
 	// Url is the last value, decode it into its original string (in bytes)
 	urlString, err := base32.StdEncoding.DecodeString(strings.ToUpper(values[len(values)-1]))
@@ -89,7 +83,7 @@ func HttpClientDoRequestStartHandler(w http.ResponseWriter, r *http.Request) {
 	id := util.StartMsg(httpMultiMsgsCache)
 
 	//Send new request ID to client for subsequent requests
-	util.ReturnMessage(w, r, id.String(), nil)
+	util.ReturnMessage(w, r, id, nil)
 
 }
 
@@ -139,11 +133,7 @@ func HttpClientDoRequestEndHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Get request from json
-	clientID, err := uuid.Parse(data["client"].(string))
-	if err != nil {
-		util.ReturnMessage(w, r, "", err)
-		return
-	}
+	clientID := data["client"].(string)
 
 	//Unpack the request from json
 	request := data["request"].(map[string]interface{})

@@ -3,8 +3,6 @@ package util
 import (
 	"strconv"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 // Client get s a new message ID with start
@@ -16,9 +14,9 @@ import (
 
 // /msg/<requestID>/<msgID>/<msgPart>
 
-func StartMsg(requestCache map[uuid.UUID]map[int]string) uuid.UUID {
+func StartMsg(requestCache map[string]map[int]string) string {
 	//Get new ID
-	id := uuid.New()
+	id := GenToken() // uuid.New()
 
 	//Store ID
 	requestCache[id] = make(map[int]string) //Make a new map to store incoming requests
@@ -27,17 +25,13 @@ func StartMsg(requestCache map[uuid.UUID]map[int]string) uuid.UUID {
 	return id
 }
 
-func PartMsg(requestCache map[uuid.UUID]map[int]string, urlPath string) error {
+func PartMsg(requestCache map[string]map[int]string, urlPath string) error {
 
 	//Parse URL Values
 	values := strings.Split(urlPath, "/")
 
 	//Get the request ID (UUID)
-	requestID, err := uuid.Parse(values[len(values)-3])
-	if err != nil {
-		//fmt.Fprintf(w, err.Error())
-		return err
-	}
+	requestID := values[len(values)-3]
 
 	//Get the Message ID (Int, increments)
 	msgID, err := strconv.Atoi(values[len(values)-2])
@@ -57,15 +51,12 @@ func PartMsg(requestCache map[uuid.UUID]map[int]string, urlPath string) error {
 
 }
 
-func EndMsg(requestCache map[uuid.UUID]map[int]string, urlPath string) (msg string, err error) {
+func EndMsg(requestCache map[string]map[int]string, urlPath string) (msg string, err error) {
 
 	values := strings.Split(urlPath, "/")
 
 	//Request ID is the last value, its the only value thats needed
-	requestID, err := uuid.Parse(values[len(values)-1])
-	if err != nil {
-		return //Return just the error
-	}
+	requestID := values[len(values)-1]
 
 	//Rebuild data from each request
 	msg = ""
