@@ -2,13 +2,9 @@ package pProxyGame
 
 import (
 	"encoding/base32"
-	"errors"
-	"fmt"
 	"net/http"
 	"pProxy/util"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,47 +23,41 @@ import (
 //
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// /game/reguser/<username>
+// /game/reguser/<username>/<password>
 
-func RegUser(w http.ResponseWriter, r *http.Request) {
+func RegUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	//Parse URL Values
 	values := strings.Split(r.URL.Path, "/")
 
-	//Get username, string, only value needed
-	encodedData := values[len(values)-1]
-	newUsernameBytes, err := base32.StdEncoding.DecodeString(strings.ToUpper(encodedData))
+	//Get username
+	encodedUsername := values[len(values)-2]
+	newUsernameBytes, err := base32.StdEncoding.DecodeString(strings.ToUpper(encodedUsername))
 	if err != nil {
-		fmt.Fprintf(w, err.Error())
+		util.ReturnMessage(w, r, "", err)
+		return
+	}
+
+	//Get password
+	encodedPassword := values[len(values)-1]
+	newPasswordBytes, err := base32.StdEncoding.DecodeString(strings.ToUpper(encodedPassword))
+	if err != nil {
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 
 	//Change to string from bytes
 	newUsername := string(newUsernameBytes)
+	newPassword := string(newPasswordBytes)
 
-	//Check if username exists
-	userExists := false
-	for _, user := range usersCache {
-		if user == newUsername {
-			userExists = true
-			break
-		}
-	}
-
-	//Return error to client if username already exists
-	if userExists {
-		util.ReturnMessage(w, r, "", errors.New("Registering failed!: "+newUsername+" already registered"))
+	//Attempt to regiser user
+	err = RegisterUser(newUsername, newPassword)
+	if err != nil {
+		util.ReturnMessage(w, r, "", err)
 		return
 	}
 
-	//Make new client in cache
-	id := uuid.New()
-	usersCache[id] = newUsername
-
-	//Json encoded message
-	util.ReturnMessage(w, r, id.String(), nil)
-
-	//Let Picotron know the id of their new user
-	//fmt.Fprintf(w, msg)
-	println(r.RemoteAddr + ": new user: " + newUsername)
+	//Notify client of successful registration
+	util.ReturnMessage(w, r, "User: "+newUsername+" successfully registered", nil)
+	return
 }

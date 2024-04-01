@@ -31,7 +31,7 @@ func ReturnMessage(_writer http.ResponseWriter, _request *http.Request, _content
 		//No error, err is false, content is message
 		msg.Err = false
 		msg.Content = _content
-		println(_request.RemoteAddr + ": RESPONED TO REQUEST: " + _request.RequestURI)
+		println(_request.RemoteAddr + ": RESPONDED TO REQUEST: " + _request.RequestURI)
 	}
 
 	//println(msg.Content)

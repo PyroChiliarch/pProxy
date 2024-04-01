@@ -1,12 +1,14 @@
 package main
 
 import (
+	//"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"pProxy/pProxyGame"
 	"pProxy/pProxyWeb"
+	//_ "github.com/mattn/go-sqlite3"
 )
 
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16,11 +18,11 @@ import (
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
-	println(r.RemoteAddr + ": Invalid Endpoint : " + r.URL.String())
+	println(r.RemoteAddr + ": Invalid Endpoint : " + r.URL.String()) // Bots spam this
 	fmt.Fprintf(w, "Invalid Endpoint")
 }
 
-func getVersion(w http.ResponseWriter, r *http.Request) {
+func getVersionHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, version)
 	println(r.RemoteAddr + ": version request")
 }
@@ -33,6 +35,14 @@ func main() {
 
 	// //////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
+	//	Database Setup
+	//
+	// //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	pProxyGame.InitDatabase()
+
+	// //////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//
 	//	Register Endpoints
 	//
 	// //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,23 +52,24 @@ func main() {
 	mux.HandleFunc("/", defaultHandler)
 
 	//Utils
-	mux.HandleFunc("/version", getVersion)
+	mux.HandleFunc("/version", getVersionHandler)
 
 	///////////////////// Register Web Endpoints /////////////////////
 	//Basic http
-	mux.HandleFunc("/http/get", pProxyWeb.HttpGet)
+	//mux.HandleFunc("/http/get", pProxyWeb.HttpGetHandler)
 
 	//Client stuff
-	mux.HandleFunc("/http/client/new", pProxyWeb.HttpClientNew)
-	mux.HandleFunc("/http/client/getjar/*", pProxyWeb.HttpClientGetJar)
+	mux.HandleFunc("/http/client/new", pProxyWeb.HttpClientNewHandler)
+	mux.HandleFunc("/http/client/getjar/*", pProxyWeb.HttpClientGetJarHandler)
 
 	//Http with client
-	mux.HandleFunc("/http/client/dorequest/start/*", pProxyWeb.HttpClientDoRequestStart)
-	mux.HandleFunc("/http/client/dorequest/msg/*", pProxyWeb.HttpClientDoRequestMsg)
-	mux.HandleFunc("/http/client/dorequest/end/*", pProxyWeb.HttpClientDoRequestEnd)
+	mux.HandleFunc("/http/client/dorequest/start/*", pProxyWeb.HttpClientDoRequestStartHandler)
+	mux.HandleFunc("/http/client/dorequest/msg/*", pProxyWeb.HttpClientDoRequestMsgHandler)
+	mux.HandleFunc("/http/client/dorequest/end/*", pProxyWeb.HttpClientDoRequestEndHandler)
 
 	///////////////////// Register Game Endpoints /////////////////////
-	mux.HandleFunc("/game/reguser/*", pProxyGame.RegUser)
+	mux.HandleFunc("/game/register/*", pProxyGame.RegUserHandler)
+	//mux.HandleFunc("/game/login/*", pProxyGame.Login)
 	//http.HandleFunc("/game/lobby/getgames")
 
 	//Apply the mux to the server
