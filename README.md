@@ -1,6 +1,7 @@
 # pProxy Server
 
-This is the pProxy server, use with the pProxy client
+Allows Proxying requests from Picotron to the outside world.
+This is the pProxy server, use with the pProxy client.
 
 To get started run the below commands on linux (You will need to adjust for windows)
 
